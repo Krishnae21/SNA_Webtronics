@@ -1,8 +1,4 @@
 from pydantic import BaseModel, EmailStr, Field
-import json
-
-# from datetime import datetime
-
 
 class AuthSchema(BaseModel):
     username: str = Field(min_length=6, max_length=16)
@@ -16,6 +12,7 @@ class SignUpSchema(AuthSchema):
 class Token(BaseModel):
     access_token: str | None = None
     refresh_token: str | None = None
+
 
 class Return(BaseModel):
     status: str = None

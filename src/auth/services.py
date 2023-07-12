@@ -1,5 +1,3 @@
-import time
-
 from passlib.hash import bcrypt
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, insert
@@ -7,7 +5,6 @@ from src.database.models import user
 from sqlalchemy.exc import SQLAlchemyError
 
 
-# async def register_user(user: UserCreate):
 async def check_user(username: str, email: str, session: AsyncSession):
     query = (
         select(user).where(user.c.username == username, user.c.email == email).limit(1)
