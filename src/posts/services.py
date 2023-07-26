@@ -1,5 +1,5 @@
 import time
-from src.posts.models import ReactionRequest, ReactionDB, PostReturn
+from src.posts.models import ReactionRequest, ReactionDB, PostReturn, FullPost
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, insert, update
 from src.database.models import post, user, reactions
@@ -26,8 +26,8 @@ async def get_post_db(post_id: int, session: AsyncSession):
         result = await session.execute(stmt)
         result = result.fetchone()
         print(result)
-        PostReturn(id=result.keys(), )
-        PostReturn(**result)
+        FullPost()
+        # return PostReturn
     except SQLAlchemyError:
         return None
 
@@ -46,12 +46,6 @@ async def add_reaction_db(req: ReactionRequest, username: str, session: AsyncSes
         await session.commit()
         return True
     except SQLAlchemyError:
-        await session.rollback()
-        try:
-            await session.execute(error_stmt)
-            await session.commit()
-            return True
-        except SQLAlchemyError:
-            return False
+        return False
 
 
