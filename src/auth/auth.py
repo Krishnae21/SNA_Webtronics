@@ -4,7 +4,6 @@ import src.auth.services as services
 from src.database.database import get_async_session
 from sqlalchemy.ext.asyncio import AsyncSession
 from src.auth.models import SignUpSchema, Token, AuthSchema, AuthReturn
-from fastapi_jwt_auth import AuthJWT
 from pydantic import BaseModel
 from src.auth.jwt_auth import JwtAuth
 from datetime import timedelta

@@ -38,4 +38,10 @@ class ReactionRequest(BaseModel):
 
 class ReactionDB(BaseModel):
     reaction: int
+    post_id: int
     reactkey: str
+
+class EditRequest(BaseModel):
+    post_id: int
+    title: str
+    body: str
