@@ -1,8 +1,12 @@
 from pydantic import BaseModel
 from typing import Literal
 from datetime import datetime
-from src.auth.models import Return
 from typing import Any
+
+
+class Return(BaseModel):
+    status: str = "Error"
+    details: str = None
 
 
 class Post(BaseModel):
@@ -26,8 +30,7 @@ class PostReturn(Return):
     data: FullPost = None
 
 
-class ReactionReturn(BaseModel):
-    status: str = "Error"
+class ReactionReturn(Return):
     type: str = None
 
 
@@ -41,7 +44,12 @@ class ReactionDB(BaseModel):
     post_id: int
     reactkey: str
 
+
 class EditRequest(BaseModel):
     post_id: int
     title: str
     body: str
+
+
+class DeleteRequest(BaseModel):
+    post_id: int

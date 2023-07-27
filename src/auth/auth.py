@@ -19,7 +19,9 @@ async def sign_in(
 ):
     if await services.auth_user(user.username, user.password, session):
         access_token = JwtAuth.create_token(user.username)
-        refresh_token = JwtAuth.create_token(user.username, type_token="refresh", expire=timedelta(days=7))
+        refresh_token = JwtAuth.create_token(
+            user.username, type_token="refresh", expire=timedelta(days=7)
+        )
         token = Token(access_token=access_token, refresh_token=refresh_token)
         return JSONResponse(status_code=200, content=AuthReturn().correct(token))
 
@@ -35,7 +37,7 @@ async def sign_up(
     if await services.check_user(
         username=user.username, email=user.email, session=session
     ):
-        return JSONResponse(status_code=401, content={AuthReturn().registered()})
+        return JSONResponse(status_code=401, content=AuthReturn().registered())
     else:
         if await services.register_user(
             email=user.email,
@@ -44,7 +46,9 @@ async def sign_up(
             session=session,
         ):
             access_token = JwtAuth.create_token(user.username)
-            refresh_token = JwtAuth.create_token(user.username, type_token="refresh", expire=timedelta(days=7))
+            refresh_token = JwtAuth.create_token(
+                user.username, type_token="refresh", expire=timedelta(days=7)
+            )
             token = Token(access_token=access_token, refresh_token=refresh_token)
             return JSONResponse(status_code=200, content=AuthReturn().correct(token))
     return JSONResponse(status_code=500, content="Internal Server Error")

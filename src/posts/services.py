@@ -1,7 +1,7 @@
 import time
 from src.posts.models import ReactionRequest, ReactionDB, PostReturn, FullPost
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, insert, func, update
+from sqlalchemy import select, insert, func, update, delete
 from src.database.models import post, reactions
 from sqlalchemy.exc import SQLAlchemyError
 
@@ -84,12 +84,36 @@ async def add_reaction_db(req: ReactionRequest, username: str, session: AsyncSes
     except SQLAlchemyError:
         return False
 
-async def edit_post(post_id: int, username: str, title: str, body: str, session: AsyncSession):
-    stmt = update(post).where(post.c.posted_username == username, post.c.id == post_id).values(title=title, body=body)
+
+async def edit_post(
+    post_id: int, username: str, title: str, body: str, session: AsyncSession
+):
+    stmt = (
+        update(post)
+        .where(post.c.posted_username == username, post.c.id == post_id)
+        .values(title=title, body=body)
+    )
     try:
-        await session.execute(stmt)
+        rez = await session.execute(stmt)
         await session.commit()
-        return True
+        if rez.rowcount > 0:
+            return 1  # Post edited
+        else:
+            return 2  # Post not found or access denied
     except SQLAlchemyError:
-        return False
+        return 3  # DataBase error
     pass
+
+
+async def delete_post(post_id: int, username: str, session: AsyncSession):
+    stmt = delete(post).where(post.c.posted_username == username, post.c.id == post_id)
+    try:
+        rez = await session.execute(stmt)
+        await session.commit()
+        if rez.rowcount > 0:
+            return 1
+        else:
+            return 2
+    except SQLAlchemyError:
+        return 3
+
