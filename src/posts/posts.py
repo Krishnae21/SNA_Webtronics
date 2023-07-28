@@ -139,7 +139,9 @@ async def delete(
 ):
     token = JwtAuth.validate_access_token(Authorization)
     if token["status"]:
-        rez = await post_services.delete_post(post_id.post_id, token.get('user'), session)
+        rez = await post_services.delete_post(
+            post_id.post_id, token.get("user"), session
+        )
         if rez == 1:
             return JSONResponse(
                 status_code=200, content=post_models.Return(status="Success").dict()

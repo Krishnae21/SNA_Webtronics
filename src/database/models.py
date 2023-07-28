@@ -1,5 +1,13 @@
-from sqlalchemy import (MetaData, Integer, String, ForeignKey,
-                        Table, Column, TIMESTAMP, JSON)
+from sqlalchemy import (
+    MetaData,
+    Integer,
+    String,
+    ForeignKey,
+    Table,
+    Column,
+    TIMESTAMP,
+    JSON,
+)
 from sqlalchemy.orm import relationship
 from datetime import datetime
 
@@ -34,5 +42,5 @@ reactions = Table(
     Column("id", Integer, primary_key=True),
     Column("reaction", Integer, nullable=False, default=False),
     Column("post_id", Integer, nullable=False, default=False),
-    Column("reactkey", String, unique=True)
+    Column("reactkey", String, unique=True),
 )

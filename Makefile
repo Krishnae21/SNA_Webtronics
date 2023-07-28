@@ -1,4 +1,5 @@
-REVISION=81c02ecfbb32
+build:
+    docker compose build
 
-db_create:
-    alembic upgrade $(REVISION)
+run:
+    docker compose up

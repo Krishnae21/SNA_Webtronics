@@ -116,4 +116,3 @@ async def delete_post(post_id: int, username: str, session: AsyncSession):
             return 2
     except SQLAlchemyError:
         return 3
-
