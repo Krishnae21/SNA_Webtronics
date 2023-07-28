@@ -30,17 +30,17 @@ post = Table(
     "post",
     metadata,
     Column("id", Integer, primary_key=True),
-    Column("posted_username", String, ForeignKey("users.username")),
-    Column("title", String),
-    Column("body", String),
-    Column("posted_at", TIMESTAMP, default=datetime.utcnow),
+    Column("posted_username", String, ForeignKey("users.username"), nullable=False),
+    Column("title", String, nullable=False),
+    Column("body", String, nullable=False),
+    Column("posted_at", TIMESTAMP, default=datetime.utcnow, nullable=False),
 )
 
 reactions = Table(
     "likes",
     metadata,
-    Column("id", Integer, primary_key=True),
+    Column("id", Integer, primary_key=True, nullable=False),
     Column("reaction", Integer, nullable=False, default=False),
     Column("post_id", Integer, ForeignKey("post.id"), nullable=False, default=False),
-    Column("reactkey", String, unique=True),
+    Column("reactkey", String, unique=True, nullable=False),
 )
