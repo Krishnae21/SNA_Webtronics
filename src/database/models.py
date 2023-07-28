@@ -41,6 +41,6 @@ reactions = Table(
     metadata,
     Column("id", Integer, primary_key=True),
     Column("reaction", Integer, nullable=False, default=False),
-    Column("post_id", Integer, nullable=False, default=False),
+    Column("post_id", Integer, ForeignKey("post.id"), nullable=False, default=False),
     Column("reactkey", String, unique=True),
 )
