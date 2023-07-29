@@ -16,8 +16,8 @@ async def new(
     session: AsyncSession = Depends(get_async_session),
 ):
     token = JwtAuth.validate_access_token(Authorization)
-    if token["status"]:
-        current_user = token["user"]
+    if token.get("status"):
+        current_user = token.get("user")
         result = await post_services.new_post(
             current_user, post.title, post.body, session
         )
@@ -26,21 +26,24 @@ async def new(
             content=post_models.PostReturn(status="Success", data=result).dict(),
         )
     else:
-        return JSONResponse(status_code=403, content=post_models.PostReturn().dict())
+        return JSONResponse(
+            status_code=403,
+            content=post_models.PostReturn(details="Permission access denied").dict(),
+        )
 
 
 @router.get("/{post_id}", response_model=post_models.PostReturn)
 async def get_post(post_id: int, session: AsyncSession = Depends(get_async_session)):
     post = await post_services.get_post_db(post_id, session)
     print(post.get("rez"))
-    if post.get("rez") == 2:
+    if post.get("rez") == 1:
         return JSONResponse(
             status_code=200,
             content=post_models.PostReturn(
                 status="Success", data=post.get("post")
             ).dict(),
         )
-    elif post.get("rez") == 1:
+    elif post.get("rez") == 2:
         return JSONResponse(
             status_code=404,
             content=post_models.PostReturn(
@@ -67,9 +70,9 @@ async def like_get(
     session: AsyncSession = Depends(get_async_session),
 ):
     token = JwtAuth.validate_access_token(Authorization)
-    if token["status"]:
+    if token.get("status"):
         if await post_services.add_reaction_db(
-            react, username=token["user"], session=session
+            react, username=token.get("user"), session=session
         ):
             return JSONResponse(
                 status_code=200,
@@ -87,7 +90,9 @@ async def like_get(
     else:
         return JSONResponse(
             status_code=403,
-            content=post_models.ReactionReturn(status="Error", type=react.type).dict(),
+            content=post_models.ReactionReturn(
+                status="Error", type=react.type, details="Permission access denied"
+            ).dict(),
         )
 
 
@@ -98,7 +103,7 @@ async def edit(
     session: AsyncSession = Depends(get_async_session),
 ):
     token = JwtAuth.validate_access_token(Authorization)
-    if token["status"]:
+    if token.get("status"):
         rez = await post_services.edit_post(
             edit.post_id, token.get("user"), edit.title, edit.body, session
         )
@@ -125,7 +130,7 @@ async def edit(
         return JSONResponse(
             status_code=403,
             content=post_models.Return(
-                status="Error", details="You don't have permission to access"
+                status="Error", details="Permission access denied"
             ).dict(),
         )
     pass
@@ -138,7 +143,7 @@ async def delete(
     session: AsyncSession = Depends(get_async_session),
 ):
     token = JwtAuth.validate_access_token(Authorization)
-    if token["status"]:
+    if token.get("status"):
         rez = await post_services.delete_post(
             post_id.post_id, token.get("user"), session
         )
@@ -164,6 +169,6 @@ async def delete(
         return JSONResponse(
             status_code=403,
             content=post_models.Return(
-                status="Error", details="You don't have permission to access"
+                status="Error", details="Permission access denied"
             ).dict(),
         )

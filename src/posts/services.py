@@ -1,9 +1,10 @@
-import time
 from src.posts.models import ReactionRequest, ReactionDB, PostReturn, FullPost
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, insert, func, update, delete
 from src.database.models import post, reactions
 from sqlalchemy.exc import SQLAlchemyError
+import sqlalchemy.exc as Sql_exc
+import src.cache.cache as cache
 
 
 async def new_post(username: str, title: str, body: str, session: AsyncSession):
@@ -12,62 +13,90 @@ async def new_post(username: str, title: str, body: str, session: AsyncSession):
         .values(posted_username=username, title=title, body=body)
         .returning(post)
     )
+
     try:
         result = await session.execute(new_post_stmt)
-
         await session.commit()
-        added_post = result.fetchone()
-        return FullPost(
-            id=added_post.id,
-            posted_username=added_post.posted_username,
-            posted_at=added_post.posted_at,
-            title=added_post.title,
-            body=added_post.body,
-        )
+
+        if result.rowcount > 0:
+            added_post = result.fetchone()
+            # Post added to base
+            return FullPost(
+                id=added_post.id,
+                posted_username=added_post.posted_username,
+                posted_at=added_post.posted_at,
+                title=added_post.title,
+                body=added_post.body,
+            )
+
+        # Post not found in result
+        else:
+            return None
+
     except SQLAlchemyError:
+        # Database error
         return None
 
 
 async def get_post_db(post_id: int, session: AsyncSession):
     post_stmt = select(post).where(post.c.id == post_id).limit(1)
-    likes_stmt = select(func.count()).where(
-        reactions.c.post_id == post_id, reactions.c.reaction == 1
-    )
-    dislikes_stmt = select(func.count()).where(
-        reactions.c.post_id == post_id, reactions.c.reaction == -1
-    )
-    rez = 0
     try:
         result = await session.execute(post_stmt)
-        result = result.fetchone()
+        if result.rowcount > 0:
+            result = result.fetchone()
+            reacts = await get_reactions(post_id, session)
 
-        # if post not found
-        if result is None:
-            rez = 1
-            return {"rez": rez, "post": None}
+            post_data = FullPost(
+                id=result.id,
+                posted_username=result.posted_username,
+                posted_at=result.posted_at,
+                likes=reacts.get("likes"),
+                dislikes=reacts.get("dislikes"),
+                title=result.title,
+                body=result.body,
+            )
+            # Good result
+            return {"rez": 1, "post": post_data}
 
-        likes = await session.execute(likes_stmt)
-        likes = likes.fetchone()
-        dislikes = await session.execute(dislikes_stmt)
-        dislikes = dislikes.fetchone()
+        else:
+            # Post not found
+            return {"rez": 2, "post": None}
 
-        post_data = FullPost(
-            id=result.id,
-            posted_username=result.posted_username,
-            posted_at=result.posted_at,
-            likes=likes[0],
-            dislikes=dislikes[0],
-            title=result.title,
-            body=result.body,
+    except Sql_exc.SQLAlchemyError:
+        # Database error
+        return {"rez": 0, "post": None}
+
+
+async def get_reactions(post_id: int, session: AsyncSession):
+    redis_data = await cache.get_post_cache(post_id)
+    if redis_data:
+        return redis_data
+    else:
+        likes_stmt = select(func.count()).where(
+            reactions.c.post_id == post_id, reactions.c.reaction == 1
         )
-        rez = 2
-        return {"rez": rez, "post": post_data}
+        dislikes_stmt = select(func.count()).where(
+            reactions.c.post_id == post_id, reactions.c.reaction == -1
+        )
+        try:
+            likes = await session.execute(likes_stmt)
+            likes = likes.fetchone()
+            dislikes = await session.execute(dislikes_stmt)
+            dislikes = dislikes.fetchone()
 
-    except Exception:
-        return {"rez": rez, "post": None}
+            react_data = {"likes": likes[0], "dislikes": dislikes[0]}
+            await cache.set_post_cache(post_id, react_data)
+            # Return good result
+            return react_data
+
+        except Sql_exc.SQLAlchemyError:
+            # Database error
+            return None
 
 
-async def add_reaction_db(req: ReactionRequest, username: str, session: AsyncSession):
+async def add_reaction_db(
+    req: ReactionRequest, username: str, session: AsyncSession
+) -> int:
     react: int = 0
     if req.type == "Like":
         react = 1
@@ -80,9 +109,16 @@ async def add_reaction_db(req: ReactionRequest, username: str, session: AsyncSes
     try:
         await session.execute(stmt)
         await session.commit()
-        return True
+        # Reaction added
+        return 1
+
+    except Sql_exc.IntegrityError:
+        # Reaction is duplicate
+        return 2
+
     except SQLAlchemyError:
-        return False
+        # Database error
+        return 3
 
 
 async def edit_post(
@@ -95,24 +131,37 @@ async def edit_post(
     )
     try:
         rez = await session.execute(stmt)
-        await session.commit()
         if rez.rowcount > 0:
-            return 1  # Post edited
+            await session.commit()
+            # Post edited
+            return 1
+
         else:
-            return 2  # Post not found or access denied
+            # Post not found or access denied
+            return 2
+
     except SQLAlchemyError:
-        return 3  # DataBase error
-    pass
+        # DataBase error
+        return 3
 
 
 async def delete_post(post_id: int, username: str, session: AsyncSession):
-    stmt = delete(post).where(post.c.posted_username == username, post.c.id == post_id)
+    reactions_stmt = delete(reactions).where(reactions.c.post_id == post_id)
+    post_stmt = delete(post).where(
+        post.c.posted_username == username, post.c.id == post_id
+    )
     try:
-        rez = await session.execute(stmt)
+        await session.execute(reactions_stmt)
+        rez = await session.execute(post_stmt)
         await session.commit()
         if rez.rowcount > 0:
+            # Post deleted
             return 1
+
         else:
+            # Post not found
             return 2
+
     except SQLAlchemyError:
+        # Database error
         return 3

@@ -10,8 +10,7 @@ async def check_user(username: str, email: str, session: AsyncSession):
         select(user).where(user.c.username == username, user.c.email == email).limit(1)
     )
     result = await session.execute(query)
-    result = result.fetchone()
-    if result is not None:
+    if result.rowcount > 0:
         return True
     else:
         return False
