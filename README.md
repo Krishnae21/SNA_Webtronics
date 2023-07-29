@@ -1,7 +1,7 @@
 # SNA_Webtronics
 Social Networking Application
 
-Из рабочего:
+Реализовано:
 1. БД с миграцией
 2. Авторизация через JWT(auth/refresh токен)
 3. Лайки и дизлайки поста
