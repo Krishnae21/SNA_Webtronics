@@ -172,3 +172,4 @@ async def delete(
                 status="Error", details="Permission access denied"
             ).dict(),
         )
+
