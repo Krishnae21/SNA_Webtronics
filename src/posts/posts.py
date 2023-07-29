@@ -5,6 +5,7 @@ import src.posts.services as post_services
 from sqlalchemy.ext.asyncio import AsyncSession
 from src.database.database import get_async_session
 from src.auth.jwt_auth import JwtAuth
+from typing import Annotated
 
 router = APIRouter(prefix="/post", tags=["Posts"])
 
@@ -12,7 +13,7 @@ router = APIRouter(prefix="/post", tags=["Posts"])
 @router.post("/new", response_model=post_models.PostReturn)
 async def new(
     post: post_models.Post,
-    Authorization: str = Header(),
+    Authorization: Annotated[str | None, Header()] = None,
     session: AsyncSession = Depends(get_async_session),
 ):
     token = JwtAuth.validate_access_token(Authorization)
@@ -66,7 +67,7 @@ async def get_post(post_id: int, session: AsyncSession = Depends(get_async_sessi
 )
 async def like_get(
     react: post_models.ReactionRequest,
-    Authorization: str = Header(),
+    Authorization: Annotated[str | None, Header()],
     session: AsyncSession = Depends(get_async_session),
 ):
     token = JwtAuth.validate_access_token(Authorization)
@@ -99,7 +100,7 @@ async def like_get(
 @router.post("/edit", response_model=post_models.Return)
 async def edit(
     edit: post_models.EditRequest,
-    Authorization: str = Header(),
+    Authorization: Annotated[str | None, Header()],
     session: AsyncSession = Depends(get_async_session),
 ):
     token = JwtAuth.validate_access_token(Authorization)
@@ -139,7 +140,7 @@ async def edit(
 @router.post("/delete", response_model=post_models.Return)
 async def delete(
     post_id: post_models.DeleteRequest,
-    Authorization: str = Header(),
+    Authorization: Annotated[str | None, Header()],
     session: AsyncSession = Depends(get_async_session),
 ):
     token = JwtAuth.validate_access_token(Authorization)

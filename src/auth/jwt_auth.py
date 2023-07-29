@@ -28,7 +28,7 @@ class JwtAuth:
             ):
                 validate["user"] = payload["username"]
                 validate["status"] = True
-        except (jwt.JWTError, KeyError):
+        except Exception:
             validate["status"] = False
         return validate
 
