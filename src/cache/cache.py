@@ -8,12 +8,6 @@ import json
 redis = aioredis.from_url("redis://localhost", decode_responses=True)
 
 
-async def main():
-    await redis.set("my-key", "value")
-    value = await redis.get("my-key")
-    print(value)
-
-
 async def set_post_cache(post_id: int, data: dict):
     try:
         await redis.set(post_id, json.dumps(data), 30)
