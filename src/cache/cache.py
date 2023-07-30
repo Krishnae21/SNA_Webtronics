@@ -18,6 +18,7 @@ async def set_post_cache(post_id: int, data: dict):
 
 async def get_post_cache(post_id: int):
     try:
+
         rez = await redis.get(post_id)
         if rez:
             return json.loads(rez)
