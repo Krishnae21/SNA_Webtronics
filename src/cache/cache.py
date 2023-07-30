@@ -5,7 +5,7 @@ import asyncio
 import json
 
 
-redis = aioredis.from_url("redis://localhost", decode_responses=True)
+redis = aioredis.from_url(f"redis://{REDIS_HOST}:{REDIS_PORT}", decode_responses=True)
 
 
 async def set_post_cache(post_id: int, data: dict):
